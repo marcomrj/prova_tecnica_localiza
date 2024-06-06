@@ -1,0 +1,12 @@
+version: '3'
+services:
+  airflow-spark:
+    build: .
+    ports:
+      - "8082:8082"  # Nova porta do Webserver do Airflow
+      - "7077:7077"  # Porta do Master do Spark
+      - "8081:8081"  # Porta da UI do Worker do Spark
+    volumes:
+      - ./dags:/opt/airflow/dags  # Diretório local para DAGs do Airflow
+      - ./logs:/opt/airflow/logs  # Diretório local para logs do Airflow
+      - ./data:/opt/airflow/data  # Diretório local para dados usados pelos DAGs
