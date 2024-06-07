@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import when, lower, col
 from functools import reduce
 import gdown
@@ -21,6 +21,11 @@ def run():
     df = _extract()
     df_transformed = _transform(df)
     _load(df_transformed)
+
+def remove_non_textual(df: DataFrame, column: str) -> DataFrame:
+    pattern = "^[A-Za-z\\s_,.]+$"
+    df_filtered = df.filter(col(column).rlike(pattern))
+    return df_filtered
 
 
 def _extract():
@@ -72,6 +77,12 @@ def _transform(df):
         .dropna()\
         .filter(~reduce(lambda a, b: a | b, (lower(col(c)) == 'none'
                                              for c in df.columns)))
+    
+    df_transformed = remove_non_textual(df_transformed, "location_region")
+    df_transformed = remove_non_textual(df_transformed, "anomaly")
+    df_transformed = remove_non_textual(df_transformed, "age_group")
+    df_transformed = remove_non_textual(df_transformed, "purchase_pattern")
+    df_transformed = remove_non_textual(df_transformed, "transaction_type")
 
     return df_transformed
 
