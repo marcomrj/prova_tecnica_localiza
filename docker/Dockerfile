@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     vim \
+    curl \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
@@ -24,22 +26,16 @@ RUN apt-get update && apt-get install -y \
     wget \
     vim \
     procps \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y \
-libpq-dev \
-gcc \
-&& apt-get clean \
-&& rm -rf /var/lib/apt/lists/*
 
 RUN pip install psycopg2
 RUN pip install apache-airflow[cncf.kubernetes] virtualenv
 RUN pip install apache-airflow==2.9.1 --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.1/constraints-3.8.txt"
-RUN pip install pyspark
+RUN pip install pyspark gdown
+RUN mkdir -p /root/data_source
 
 COPY entrypoint.sh /entrypoint.sh
-COPY ./data_source/ /root/data_source/
-
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8080 7077 6066

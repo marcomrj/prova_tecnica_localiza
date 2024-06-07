@@ -29,9 +29,9 @@ with DAG(
     )
 
     run_etl = PythonOperator(
-    task_id='run_etl',
-    python_callable=run,
-    dag=dag,
+        task_id='run_etl',
+        python_callable=run,
+        dag=dag,
     )
 
     avarage_risk_score_task = PythonOperator(
@@ -50,4 +50,4 @@ with DAG(
         task_id='end'
     )
 
-    start >> run_etl >> [avarage_risk_score_task,top_sales_task] >> end
+    start >> run_etl >> [avarage_risk_score_task, top_sales_task] >> end
