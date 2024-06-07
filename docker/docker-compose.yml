@@ -1,12 +1,63 @@
 version: '3'
 services:
-  airflow-spark:
+  airflow-webserver:
     build: .
     ports:
-      - "8082:8082"  # Nova porta do Webserver do Airflow
-      - "7077:7077"  # Porta do Master do Spark
-      - "8081:8081"  # Porta da UI do Worker do Spark
+      - "8082:8080"
     volumes:
-      - ./dags:/opt/airflow/dags  # Diretório local para DAGs do Airflow
-      - ./logs:/opt/airflow/logs  # Diretório local para logs do Airflow
-      - ./data:/opt/airflow/data  # Diretório local para dados usados pelos DAGs
+      - ../airflow/dags:/root/airflow/dags
+      - ../airflow/include:/root/airflow/include
+      - ../airflow/logs:/root/airflow/logs
+      - ../output:/root/output
+    command: webserver
+    entrypoint: ["/entrypoint.sh"]
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - PYTHONPATH=/root/airflow/dags:/root/airflow/include
+    depends_on:
+      - postgres
+
+  airflow-scheduler:
+    build: .
+    volumes:
+      - ../airflow/dags:/root/airflow/dags
+      - ../airflow/include:/root/airflow/include
+      - ../airflow/logs:/root/airflow/logs
+      - ../output:/root/output
+
+    command: scheduler
+    entrypoint: ["/entrypoint.sh"]
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - PYTHONPATH=/root/airflow/dags:/root/airflow/include
+    depends_on:
+      - postgres
+
+  spark-master:
+    build: .
+    ports:
+      - "7077:7077"  # Spark Master port
+      - "8080:8080"  # Spark Master Web UI
+    command: start-master.sh
+
+  spark-worker:
+    build: .
+    ports:
+      - "8081:8081"  # Spark Worker Web UI
+    command: start-worker.sh spark://spark-master:7077
+    depends_on:
+      - spark-master
+
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+
+volumes:
+  postgres-db-volume:

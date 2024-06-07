@@ -1,13 +1,24 @@
 #!/bin/bash
 
-# Inicializa o scheduler do Airflow em background
-airflow db init
-airflow users create --username admin --password admin --firstname Anonymous --lastname Admin --role Admin --email admin@example.com
-airflow webserver -p 8082 &
+# Atualiza o banco de dados do Airflow
+airflow db upgrade
 
-# Inicia o master e worker do Spark
-start-master.sh -p 7077
-start-worker.sh spark://localhost:7077
+# Cria um usuário se não existir
+if ! airflow users list | grep -q "admin"; then
+    airflow users create \
+        --username admin \
+        --password admin \
+        --firstname Anonymous \
+        --lastname Admin \
+        --role Admin \
+        --email admin@example.com
+fi
 
-# Mantém o container rodando
-tail -f /dev/null
+# O comando para iniciar depende do argumento passado para o entrypoint
+if [ "$1" = "webserver" ]; then
+    exec airflow webserver
+elif [ "$1" = "scheduler" ]; then
+    exec airflow scheduler
+else
+    exec "$@"
+fi
