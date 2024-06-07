@@ -22,6 +22,7 @@ def run():
     df_transformed = _transform(df)
     _load(df_transformed)
 
+
 def remove_non_textual(df: DataFrame, column: str) -> DataFrame:
     pattern = "^[A-Za-z\\s_,.]+$"
     df_filtered = df.filter(col(column).rlike(pattern))
@@ -77,7 +78,7 @@ def _transform(df):
         .dropna()\
         .filter(~reduce(lambda a, b: a | b, (lower(col(c)) == 'none'
                                              for c in df.columns)))
-    
+
     df_transformed = remove_non_textual(df_transformed, "location_region")
     df_transformed = remove_non_textual(df_transformed, "anomaly")
     df_transformed = remove_non_textual(df_transformed, "age_group")
